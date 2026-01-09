@@ -38,11 +38,12 @@ def apply_rule_a_mortality_benefit(row):
     return ""
 
 # ============================================================================
-# Knowledge Rule B: Tolerability & Adherence (ACEI vs. ARB - Cough Risk)
+# Knowledge Rule B: Tolerability & Adherence (ACEI vs. ARB Cough Risk)
 # ============================================================================
 def apply_rule_b_tolerability(row):
     """
     ACEIs carry 3.2-fold higher risk of dry cough vs ARBs due to bradykinin.
+    ARBs have superior tolerability and are preferred when ACEI side effects occur.
     Source: Hu et al. (2023), ACCP Guidelines (2006)
     """
     drug_a_class = row['Drug_A_Class']
@@ -150,7 +151,7 @@ df['XAI_Rule_D_Diuretic'] = df.apply(apply_rule_d_diuretic_preference, axis=1)
 df['XAI_Rule_E_BetaBlocker'] = df.apply(apply_rule_e_beta_blocker_phenotype, axis=1)
 
 print("✓ Rule A (ACEI Mortality Benefit) applied")
-print("✓ Rule B (ACEI Cough Risk) applied")
+print("✓ Rule B (ACEI vs ARB Tolerability) applied")
 print("✓ Rule C (CCB+RAAS Combination) applied")
 print("✓ Rule D (Diuretic Preference) applied")
 print("✓ Rule E (Beta-Blocker Phenotype) applied")
@@ -191,11 +192,11 @@ rule_c_count = (df['XAI_Rule_C_CCB_RAAS_Combo'] != "").sum()
 rule_d_count = (df['XAI_Rule_D_Diuretic'] != "").sum()
 rule_e_count = (df['XAI_Rule_E_BetaBlocker'] != "").sum()
 
-print(f"\nRule A (ACEI Mortality):    {rule_a_count} pairs ({rule_a_count/len(df)*100:.1f}%)")
-print(f"Rule B (ACEI Cough Risk):   {rule_b_count} pairs ({rule_b_count/len(df)*100:.1f}%)")
-print(f"Rule C (CCB+RAAS Combo):    {rule_c_count} pairs ({rule_c_count/len(df)*100:.1f}%)")
-print(f"Rule D (Diuretic):          {rule_d_count} pairs ({rule_d_count/len(df)*100:.1f}%)")
-print(f"Rule E (Beta-Blocker):      {rule_e_count} pairs ({rule_e_count/len(df)*100:.1f}%)")
+print(f"\nRule A (ACEI Mortality):      {rule_a_count} pairs ({rule_a_count/len(df)*100:.1f}%)")
+print(f"Rule B (ACEI/ARB Tolerability): {rule_b_count} pairs ({rule_b_count/len(df)*100:.1f}%)")
+print(f"Rule C (CCB+RAAS Combo):      {rule_c_count} pairs ({rule_c_count/len(df)*100:.1f}%)")
+print(f"Rule D (Diuretic):            {rule_d_count} pairs ({rule_d_count/len(df)*100:.1f}%)")
+print(f"Rule E (Beta-Blocker):        {rule_e_count} pairs ({rule_e_count/len(df)*100:.1f}%)")
 
 total_with_notes = (df['XAI_Combined_Clinical_Notes'] != "No specific XAI rules apply to this combination.").sum()
 print(f"\nTotal pairs with XAI notes: {total_with_notes} ({total_with_notes/len(df)*100:.1f}%)")
