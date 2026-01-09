@@ -53,6 +53,11 @@ def apply_rule_b_tolerability(row):
                 "to ARBs due to the accumulation of bradykinin. If tolerability becomes a barrier "
                 "to adherence, ARBs are recommended as the standard alternative (Source: Hu et al., "
                 "2023; ACCP Guidelines, 2006).")
+    elif drug_a_class == 'ARB' or drug_b_class == 'ARB':
+        return ("Clinical Note: ARBs have a superior tolerability profile with significantly lower "
+                "risk of dry cough compared to ACE Inhibitors (3.2-fold lower risk). ARBs are the "
+                "preferred alternative when cough or other ACEI-related side effects limit adherence "
+                "(Source: Hu et al., 2023; ACCP Guidelines, 2006).")
     return ""
 
 # ============================================================================
