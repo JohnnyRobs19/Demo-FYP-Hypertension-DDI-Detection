@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Debug files
+debug_*.html
+debug_*.png
+debug_*.py
+
+# Zone Identifier files (Windows)
+*:Zone.Identifier
+
+# Temporary files
+*.csv.bak
+*.tmp
