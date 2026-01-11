@@ -527,7 +527,90 @@ class PathwaySimulator:
         # Unified Ranking Vector
         print(f"\n4️⃣  UNIFIED RANKING VECTOR")
         print(f"   Q(s, G, k) = [{result['safety_floor_s']}, {result['foundation_g']}, {result['specialist_k']}]ᵀ")
-        print(f"\n{'─' * 80}\n")
+        print(f"\n{'─' * 80}")
+
+        # Clinical recommendation for non-CPG-compliant pathways
+        if result['foundation_g'] == 0:
+            self._suggest_cpg_alternatives(result)
+
+        print()
+
+    def _suggest_cpg_alternatives(self, result: Dict):
+        """Suggest CPG-compliant alternatives when G=0"""
+        print(f"\n⚠️  CLINICAL RECOMMENDATION:")
+        print(f"   This pathway is NOT CPG-Compliant (missing ACEI/ARB + CCB foundation).")
+        print(f"   International guidelines recommend ACEI/ARB + CCB as first-line therapy.")
+        print(f"\n   💡 Suggested CPG-Compliant Alternatives:")
+
+        # Determine what's missing
+        drugs = result['drugs']
+        drug_classes = set(DRUG_TO_CLASS.get(drug) for drug in drugs)
+
+        has_raas = 'ACEI' in drug_classes or 'ARB' in drug_classes
+        has_ccb = 'CCB' in drug_classes
+
+        # Get RAAS blocker or CCB from current pathway
+        current_raas = None
+        current_ccb = None
+        other_drugs = []
+
+        for drug in drugs:
+            drug_class = DRUG_TO_CLASS.get(drug)
+            if drug_class in ['ACEI', 'ARB']:
+                current_raas = drug
+            elif drug_class == 'CCB':
+                current_ccb = drug
+            else:
+                other_drugs.append(drug)
+
+        # Generate alternatives
+        alternatives = []
+
+        if has_raas and not has_ccb:
+            # Has RAAS blocker, missing CCB - suggest adding CCB
+            ccb_options = ['Amlodipine', 'Nifedipine', 'Diltiazem']
+            for ccb in ccb_options:
+                if ccb in DRUG_TO_CLASS:  # Check if in dataset
+                    alt_drugs = [current_raas, ccb] + other_drugs
+                    alt_result = self.ranker.evaluate_pathway(alt_drugs)
+                    if alt_result['cpg_compliant'] and alt_result['safety_floor_s'] >= 2:
+                        alternatives.append(alt_result)
+
+        elif has_ccb and not has_raas:
+            # Has CCB, missing RAAS blocker - suggest adding ACEI/ARB
+            raas_options = ['Ramipril', 'Enalapril', 'Lisinopril', 'Losartan', 'Telmisartan']
+            for raas in raas_options:
+                if raas in DRUG_TO_CLASS:  # Check if in dataset
+                    alt_drugs = [raas, current_ccb] + other_drugs
+                    alt_result = self.ranker.evaluate_pathway(alt_drugs)
+                    if alt_result['cpg_compliant'] and alt_result['safety_floor_s'] >= 2:
+                        alternatives.append(alt_result)
+
+        else:
+            # Missing both - suggest common combinations
+            combinations = [
+                ['Ramipril', 'Amlodipine'],
+                ['Enalapril', 'Amlodipine'],
+                ['Lisinopril', 'Amlodipine'],
+                ['Losartan', 'Amlodipine'],
+            ]
+            for combo in combinations:
+                if all(drug in DRUG_TO_CLASS for drug in combo):
+                    alt_drugs = combo + other_drugs
+                    alt_result = self.ranker.evaluate_pathway(alt_drugs)
+                    if alt_result['cpg_compliant'] and alt_result['safety_floor_s'] >= 2:
+                        alternatives.append(alt_result)
+
+        # Sort alternatives by ranking vector
+        alternatives = sorted(alternatives, key=lambda x: x['ranking_vector'], reverse=True)
+
+        # Display top 3 alternatives
+        if alternatives:
+            for i, alt in enumerate(alternatives[:3], 1):
+                severity_label = {3: "No Interaction", 2: "Minor", 1: "Moderate", 0: "Major"}[alt['safety_floor_s']]
+                print(f"   {i}. {alt['pathway']}: {severity_label} Q{alt['ranking_vector']}")
+        else:
+            print(f"   (No safe CPG-compliant alternatives found with current drugs)")
 
     def demonstrate_use_case(self, case_name: str, drugs: List[str], description: str, wait_for_user: bool = True):
         """Demonstrate a single use case"""
