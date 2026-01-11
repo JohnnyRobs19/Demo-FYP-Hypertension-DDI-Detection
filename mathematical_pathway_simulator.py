@@ -175,10 +175,12 @@ class XAIRuleEvaluator:
     @staticmethod
     def evaluate_rule_d(drugs: List[str]) -> bool:
         """
-        Rule D - Diuretic Efficacy: Pathway contains Indapamide (superior to HCTZ)
-        Clinical: Indapamide reduces mortality/stroke/HF significantly
+        Rule D - Diuretic Efficacy: Pathway contains any diuretic
+        Clinical: Indapamide is superior (reduces mortality/stroke/HF), HCTZ is inferior
         """
-        return 'Indapamide' in drugs
+        # Check if pathway contains any drug in the Diuretic class
+        drug_classes = [DRUG_TO_CLASS.get(drug) for drug in drugs]
+        return 'Diuretic' in drug_classes
 
     @staticmethod
     def evaluate_rule_e(drugs: List[str]) -> bool:
