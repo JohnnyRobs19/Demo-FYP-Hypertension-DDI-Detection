@@ -361,6 +361,125 @@ class PathwaySimulator:
         print(f"  {title}")
         print("=" * 80 + "\n")
 
+    def generate_clinical_recommendations(self, pathways_results: List[Dict]):
+        """Generate clinical recommendations grouped by pathway type and severity"""
+
+        # Filter only CPG-compliant pathways (G=1)
+        cpg_compliant = [p for p in pathways_results if p['cpg_compliant']]
+
+        if not cpg_compliant:
+            print("⚠️  No CPG-compliant pathways found. All pathways must include ACEI/ARB + CCB.")
+            return
+
+        # Group pathways by type
+        pathway_groups = {
+            'foundation': [],  # ACEI/ARB + CCB only
+            'foundation_diuretic': [],  # ACEI/ARB + CCB + Diuretic
+            'foundation_bb': [],  # ACEI/ARB + CCB + Beta-Blocker
+            'foundation_both': []  # ACEI/ARB + CCB + Diuretic + Beta-Blocker
+        }
+
+        for pathway in cpg_compliant:
+            drug_classes = set(DRUG_TO_CLASS.get(drug) for drug in pathway['drugs'])
+            has_diuretic = 'Diuretic' in drug_classes
+            has_bb = 'Beta-Blocker' in drug_classes
+
+            if has_diuretic and has_bb:
+                pathway_groups['foundation_both'].append(pathway)
+            elif has_diuretic:
+                pathway_groups['foundation_diuretic'].append(pathway)
+            elif has_bb:
+                pathway_groups['foundation_bb'].append(pathway)
+            else:
+                pathway_groups['foundation'].append(pathway)
+
+        # Print grouped recommendations
+        self.print_section_header("CLINICAL RECOMMENDATIONS (CPG-Compliant Pathways Only)")
+
+        # Foundation only
+        if pathway_groups['foundation']:
+            self._print_pathway_group("FOUNDATION: RAAS Blocker + CCB", pathway_groups['foundation'])
+
+        # Foundation + Diuretic
+        if pathway_groups['foundation_diuretic']:
+            self._print_pathway_group("FOUNDATION + DIURETIC", pathway_groups['foundation_diuretic'])
+
+        # Foundation + Beta-Blocker
+        if pathway_groups['foundation_bb']:
+            self._print_pathway_group("FOUNDATION + BETA-BLOCKER", pathway_groups['foundation_bb'])
+
+        # Foundation + Both
+        if pathway_groups['foundation_both']:
+            self._print_pathway_group("FOUNDATION + DIURETIC + BETA-BLOCKER", pathway_groups['foundation_both'])
+
+    def _print_pathway_group(self, title: str, pathways: List[Dict]):
+        """Print a group of pathways separated by ACEI/ARB and severity"""
+        print(f"\n{'═' * 80}")
+        print(f"📋 {title}")
+        print(f"{'═' * 80}")
+
+        # Separate ACEI and ARB pathways
+        acei_pathways = []
+        arb_pathways = []
+
+        for pathway in pathways:
+            drug_classes = [DRUG_TO_CLASS.get(drug) for drug in pathway['drugs']]
+            if 'ACEI' in drug_classes:
+                acei_pathways.append(pathway)
+            elif 'ARB' in drug_classes:
+                arb_pathways.append(pathway)
+
+        # Print ACEI combinations
+        if acei_pathways:
+            print(f"\n🔷 ACEI-Based Combinations:")
+            self._print_by_severity(acei_pathways)
+
+        # Print ARB combinations
+        if arb_pathways:
+            print(f"\n🔶 ARB-Based Combinations:")
+            self._print_by_severity(arb_pathways)
+
+    def _print_by_severity(self, pathways: List[Dict]):
+        """Print pathways grouped by severity level"""
+
+        # Group by safety floor (severity)
+        severity_groups = {
+            3: [],  # No Interaction
+            2: [],  # Minor
+            1: [],  # Moderate
+            0: []   # Major
+        }
+
+        for pathway in pathways:
+            severity_groups[pathway['safety_floor_s']].append(pathway)
+
+        severity_labels = {
+            3: "No Interaction",
+            2: "Minor",
+            1: "Moderate",
+            0: "Major"
+        }
+
+        # Print each severity group
+        for severity in [3, 2, 1, 0]:
+            if severity_groups[severity]:
+                emoji = "✅" if severity >= 2 else "⚠️" if severity == 1 else "❌"
+                print(f"\n   {emoji} {severity_labels[severity]}:")
+
+                for pathway in severity_groups[severity]:
+                    print(f"   • {pathway['pathway']}")
+                    print(f"     Q(s,G,k) = {pathway['ranking_vector']}")
+
+                    # Show all pairwise interactions
+                    for interaction in pathway['interactions']:
+                        severity_emoji = "🟢" if interaction['severity_score'] >= 2 else "🟡" if interaction['severity_score'] == 1 else "🔴"
+                        print(f"       {severity_emoji} {interaction['pair']}: {interaction['severity_label']}")
+
+                    # Show satisfied rules
+                    rules_str = ', '.join(pathway['satisfied_rules'])
+                    print(f"     XAI Rules: {{{rules_str}}}")
+                    print()
+
     def print_pathway_result(self, result: Dict):
         """Print detailed pathway evaluation result"""
         print(f"Pathway: {result['pathway']}")
@@ -637,6 +756,11 @@ class PathwaySimulator:
         print("5. UNIFIED RANKING VECTOR:")
         print("   Q(s, G, k) = [s, G, k]ᵀ")
         print("   Lexicographic ordering: s > G > k (safety first, then CPG, then specialization)\n")
+
+        # ====================================================================
+        # CLINICAL RECOMMENDATIONS
+        # ====================================================================
+        self.generate_clinical_recommendations(all_results)
 
         # ====================================================================
         # STATISTICS
