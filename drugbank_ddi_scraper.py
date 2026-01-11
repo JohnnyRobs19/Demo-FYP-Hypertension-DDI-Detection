@@ -299,9 +299,9 @@ class DrugBankDDIScraper:
 
             # Wait for dropdown to appear
             logging.debug("Waiting for dropdown to appear...")
-            await self.page.wait_for_timeout(1500)
+            await self.page.wait_for_timeout(2000)
 
-            # Try to find and select the best matching dropdown option
+            # Try to find and select the best matching dropdown option with retry logic
             best_match = await self._find_best_dropdown_match(drug_name)
 
             if best_match:
