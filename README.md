@@ -48,7 +48,7 @@ The project implements three core modules:
 - Rule D: Diuretic efficacy comparison (Roush 2015)
 - Rule E: Beta-blocker phenotype targeting (Mahfoud 2024)
 
-**Files:** `add_xai_framework.py`, `create_sample_drug_pairs.py`
+**Files:** `add_xai_framework.py`
 
 ### Module 3: Machine Learning Prediction
 
@@ -131,8 +131,7 @@ Data Collection
 └── debug_drugbank_html_analysis.py
 
 Knowledge Integration
-├── add_xai_framework.py
-└── create_sample_drug_pairs.py
+└── add_xai_framework.py
 
 Machine Learning
 ├── Random_Forest_DDI_Analysis_and_Training_DrugBank_Only.ipynb
@@ -142,9 +141,7 @@ Mathematical Framework
 └── mathematical_pathway_simulator.py
 
 Documentation
-├── README.md
-├── PANEL_DEMO_GUIDE.md
-└── DATASET_VERIFICATION_REPORT.md
+└── README.md
 ```
 
 ---
