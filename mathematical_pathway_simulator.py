@@ -3,13 +3,18 @@
 MATHEMATICAL FRAMEWORK FOR SAFE MEDICATION PATHWAY RANKING
 ================================================================================
 Demonstrates the complete mathematical system for evaluating and ranking
-hypertension medication pathways based on:
-1. Safety Floor (s) - DDI severity assessment
-2. Foundation Constraint (G) - CPG compliance via XAI Rules A, B, C
-3. Specialist Prescription (k) - Escalation rules D, E
-4. Unified Ranking Vector Q(s, G, k) with lexicographic ordering
+hypertension medication pathways based on four mathematical components:
 
-Author: Final Year Project - Hypertension DDI Detection System
+1. Interaction Complexity - Using the Combination Formula C(n,2)
+2. Safety Floor (s) - Minimum severity score (weakest link principle)
+3. Foundation Constraint (G) - Indicator Function for CPG Rules A, B, C
+4. Specialist Score (k) - Counts escalation rules (Diuretics/Beta-blockers)
+
+FINAL RESULT: Unified Ranking Vector Q(s, G, k)
+Uses Lexicographic Ordering where safety dominates, then CPG compliance, then
+specialist prescription. Safety dominates because a guideline-compliant
+prescription is medically invalid if it causes a life-threatening interaction.
+
 Date: January 2026
 ================================================================================
 """
@@ -44,13 +49,13 @@ DRUG_CLASSES = {}
 DRUG_TO_CLASS = {}
 
 # ============================================================================
-# MODULE 1: DDI SEVERITY CALCULATOR
+# COMPONENT 1 & 2: INTERACTION COMPLEXITY AND SAFETY FLOOR CALCULATOR
 # ============================================================================
 
 class DDISeverityCalculator:
     """
-    Implements the Safety Floor calculation:
-    s = minimum(S) where S ∈ {0, 1, 2, 3}
+    Component 1: Calculates Interaction Complexity using C(n,2)
+    Component 2: Calculates Safety Floor s = minimum(S) where S ∈ {0, 1, 2, 3}
     """
 
     def __init__(self, ddi_dataset_path: str):
@@ -134,13 +139,14 @@ class DDISeverityCalculator:
         return safety_floor, interaction_details
 
 # ============================================================================
-# MODULE 2: XAI RULE EVALUATOR
+# XAI RULE EVALUATOR (Supports Components 3 & 4)
 # ============================================================================
 
 class XAIRuleEvaluator:
     """
     Evaluates which XAI knowledge rules (A, B, C, D, E) are satisfied
-    by a given medication pathway
+    by a given medication pathway.
+    Supports Component 3 (Foundation Constraint G) and Component 4 (Specialist Score k)
     """
 
     @staticmethod
@@ -205,12 +211,13 @@ class XAIRuleEvaluator:
         }
 
 # ============================================================================
-# MODULE 3: FOUNDATION & SPECIALIST CONSTRAINT CALCULATOR
+# COMPONENT 3 & 4: FOUNDATION CONSTRAINT (G) AND SPECIALIST SCORE (k)
 # ============================================================================
 
 class ConstraintCalculator:
     """
-    Calculates Foundation Constraint (G) and Specialist Prescription (k)
+    Component 3: Calculates Foundation Constraint (G) - Indicator Function
+    Component 4: Calculates Specialist Score (k) - Escalation rule count
     """
 
     @staticmethod
@@ -247,12 +254,14 @@ class ConstraintCalculator:
         return k
 
 # ============================================================================
-# MODULE 4: UNIFIED RANKING SYSTEM
+# FINAL RESULT: UNIFIED RANKING VECTOR Q(s, G, k)
 # ============================================================================
 
 class PathwayRanker:
     """
-    Implements the Unified Ranking Vector Q(s, G, k) with lexicographic ordering
+    Combines all four components into the Unified Ranking Vector Q(s, G, k).
+    Uses Lexicographic Ordering where safety dominates, then CPG compliance,
+    then specialist prescription.
     """
 
     def __init__(self, ddi_calculator: DDISeverityCalculator):
@@ -345,12 +354,14 @@ class PathwayRanker:
         return ranked
 
 # ============================================================================
-# MODULE 5: COMPREHENSIVE USE CASE SIMULATOR
+# PATHWAY SIMULATOR: DEMONSTRATES THE COMPLETE MATHEMATICAL FRAMEWORK
 # ============================================================================
 
 class PathwaySimulator:
     """
-    Demonstrates exhaustive use cases for the mathematical framework
+    Demonstrates the complete mathematical framework:
+    - Four components (Interaction Complexity, Safety Floor, Foundation Constraint, Specialist Score)
+    - Final Result (Unified Ranking Vector Q(s, G, k))
     """
 
     def __init__(self, ddi_dataset_path: str):
@@ -491,42 +502,51 @@ class PathwaySimulator:
         """Print detailed pathway evaluation result"""
         print(f"Pathway: {result['pathway']}")
         print(f"Number of drugs (n): {result['n_drugs']}")
-        print(f"Number of interactions C(n,2): {result['n_interactions']}")
         print(f"\n{'─' * 80}")
 
-        # Safety Floor
-        print(f"\n1️⃣  SAFETY FLOOR (s)")
-        print(f"   Formula: s = minimum(S) where S ∈ {{0, 1, 2, 3}}")
-        print(f"   Result: s = {result['safety_floor_s']}")
-        print(f"   Clinical Flag: {result['clinical_flag']} (s {'≥' if result['safety_floor_s'] >= 2 else '<'} 2)")
+        # Component 1: Interaction Complexity
+        print(f"\n1️⃣  INTERACTION COMPLEXITY")
+        print(f"   Using the Combination Formula: C(n, 2) = n! / (2!(n-2)!)")
+        print(f"   For n = {result['n_drugs']} drugs:")
+        print(f"   C({result['n_drugs']}, 2) = {result['n_interactions']} interaction pair{'s' if result['n_interactions'] != 1 else ''}")
+
+        # Component 2: Safety Floor
+        print(f"\n2️⃣  SAFETY FLOOR (s)")
+        print(f"   The minimum severity score across all pairs (weakest link principle)")
+        print(f"   Severity ranges: 0=Major DDI, 1=Moderate DDI, 2=Minor DDI, 3=No Interaction")
         print(f"\n   Interaction Details:")
         for interaction in result['interactions']:
-            print(f"   • {interaction['pair']}: {interaction['severity_label']} (score={interaction['severity_score']})")
+            severity_emoji = "🟢" if interaction['severity_score'] >= 2 else "🟡" if interaction['severity_score'] == 1 else "🔴"
+            print(f"   {severity_emoji} {interaction['pair']}: {interaction['severity_label']} (score={interaction['severity_score']})")
+        print(f"\n   Result: s = {result['safety_floor_s']} ({result['clinical_flag']})")
 
-        # Foundation Constraint
-        print(f"\n2️⃣  FOUNDATION CONSTRAINT (G) - CPG Compliance")
-        print(f"   Formula: G = 𝟙_ℱ(P) where ℱ = {{A, B, C}}")
-        print(f"   Satisfied Rules: {{{', '.join(result['satisfied_rules'])}}}")
-        print(f"   Foundation Set ℱ ⊆ SatisfiedRules? {'Yes' if result['cpg_compliant'] else 'No'}")
-        print(f"   Result: G = {result['foundation_g']} ({'CPG-Compliant' if result['cpg_compliant'] else 'Not CPG-Compliant'})")
-
-        # Rule Details
+        # Component 3: Foundation Constraint
+        print(f"\n3️⃣  FOUNDATION CONSTRAINT (G)")
+        print(f"   Indicator Function: G = 1 if CPG Rules A, B, and C are ALL satisfied, 0 otherwise")
+        print(f"   This ensures patients receive a RAS blocker plus a Calcium Channel Blocker")
         print(f"\n   XAI Rule Evaluation:")
         for rule, satisfied in result['rule_details'].items():
             status = "✓ Satisfied" if satisfied else "✗ Not Satisfied"
             print(f"   • Rule {rule}: {status}")
+        print(f"\n   Foundation Set {{A, B, C}} ⊆ SatisfiedRules? {'Yes' if result['cpg_compliant'] else 'No'}")
+        print(f"   Result: G = {result['foundation_g']} ({'CPG-Compliant' if result['cpg_compliant'] else 'Not CPG-Compliant'})")
 
-        # Specialist Prescription
-        print(f"\n3️⃣  SPECIALIST PRESCRIPTION (k)")
-        print(f"   Formula: k = |SatisfiedRules(P) ∩ ℰ| if (D ∈ P) ∨ (E ∈ P), else 0")
-        print(f"   Escalation Set ℰ = {{D, E}}")
+        # Component 4: Specialist Score
+        print(f"\n4️⃣  SPECIALIST SCORE (k)")
+        print(f"   Counts how many escalation rules (Diuretics or Beta-blockers) are satisfied")
+        print(f"   For resistant hypertension: Escalation Set ℰ = {{D, E}}")
         satisfied_escalation = set(result['satisfied_rules']).intersection(ESCALATION_SET)
         print(f"   Satisfied Escalation Rules: {{{', '.join(satisfied_escalation) if satisfied_escalation else 'None'}}}")
         print(f"   Result: k = {result['specialist_k']}")
 
-        # Unified Ranking Vector
-        print(f"\n4️⃣  UNIFIED RANKING VECTOR")
+        # Final Result: Unified Ranking Vector
+        print(f"\n{'═' * 80}")
+        print(f"FINAL RESULT: Unified Ranking Vector Q(s, G, k)")
+        print(f"{'═' * 80}")
         print(f"   Q(s, G, k) = [{result['safety_floor_s']}, {result['foundation_g']}, {result['specialist_k']}]ᵀ")
+        print(f"\n   Lexicographic Ordering: Safety (s) dominates, then CPG compliance (G), then")
+        print(f"   specialist prescription (k). Safety dominates because a guideline-compliant")
+        print(f"   prescription is medically invalid if it causes a life-threatening drug interaction.")
         print(f"\n{'─' * 80}")
 
         # Clinical recommendation for non-CPG-compliant pathways
@@ -643,33 +663,41 @@ class PathwaySimulator:
         self.print_section_header("CATEGORY 1: TWO-DRUG COMBINATIONS (n=2)")
         print("Interaction Pairs: C(2,2) = 1 pair")
 
-        # Use Case 1.1: ACEI + CCB (Foundation Rules A, B, C)
+        # Use Case 1.1: ACEI + CCB (Foundation Rules A, B, C) - BEST PATHWAY (RANK 1)
         result = self.demonstrate_use_case(
-            "1.1 - ACEI + CCB (Optimal Foundation)",
+            "1.1 - ACEI + CCB (Optimal Foundation) - RANK 1",
             ['Ramipril', 'Amlodipine'],
             "Tests Foundation Set {A, B, C} satisfaction via RAAS blocker + CCB combo"
         )
         all_results.append(result)
 
-        # Use Case 1.2: ARB + CCB (Foundation Rules A, B, C)
+        # Use Case 1.2: Dual RAAS Blockade (ACEI + ARB) - WORST PATHWAY (RANK 14)
         result = self.demonstrate_use_case(
-            "1.2 - ARB + CCB (Alternative Foundation)",
+            "1.2 - Dual RAAS Blockade (ACEI + ARB) - RANK 14",
+            ['Ramipril', 'Losartan'],
+            "Tests contraindicated dual RAAS blockade (expected Moderate DDI, s=1)"
+        )
+        all_results.append(result)
+
+        # Use Case 1.3: ARB + CCB (Foundation Rules A, B, C)
+        result = self.demonstrate_use_case(
+            "1.3 - ARB + CCB (Alternative Foundation)",
             ['Losartan', 'Amlodipine'],
             "Tests Foundation Set with ARB instead of ACEI"
         )
         all_results.append(result)
 
-        # Use Case 1.3: ACEI + Thiazide (Rules A, B only - Missing C)
+        # Use Case 1.4: ACEI + Thiazide (Rules A, B only - Missing C)
         result = self.demonstrate_use_case(
-            "1.3 - ACEI + Thiazide (Incomplete Foundation)",
+            "1.4 - ACEI + Thiazide (Incomplete Foundation)",
             ['Enalapril', 'Hydrochlorothiazide'],
             "Tests pathway missing Rule C (no CCB), G=0 expected"
         )
         all_results.append(result)
 
-        # Use Case 1.4: CCB + Beta-Blocker (Missing A, B)
+        # Use Case 1.5: CCB + Beta-Blocker (Missing A, B)
         result = self.demonstrate_use_case(
-            "1.4 - CCB + Beta-Blocker (No RAAS Blocker)",
+            "1.5 - CCB + Beta-Blocker (No RAAS Blocker)",
             ['Amlodipine', 'Metoprolol'],
             "Tests pathway without ACEI/ARB, missing Foundation Rules A & B"
         )
@@ -748,25 +776,17 @@ class PathwaySimulator:
         # ====================================================================
         self.print_section_header("CATEGORY 4: EDGE CASES & SPECIAL SCENARIOS")
 
-        # Use Case 4.1: Dual RAAS Blockade (ACEI + ARB) - High DDI Risk
+        # Use Case 4.1: Beta-Blocker + CCB (Rate-Control Interaction)
         result = self.demonstrate_use_case(
-            "4.1 - Dual RAAS Blockade (ACEI + ARB)",
-            ['Ramipril', 'Losartan'],
-            "Tests contraindicated dual RAAS blockade (expected Major DDI, s=0-1)"
-        )
-        all_results.append(result)
-
-        # Use Case 4.2: Beta-Blocker + CCB (Rate-Control Interaction)
-        result = self.demonstrate_use_case(
-            "4.2 - Non-Dihydropyridine CCB + Beta-Blocker",
+            "4.1 - Non-Dihydropyridine CCB + Beta-Blocker",
             ['Diltiazem', 'Metoprolol'],
             "Tests potential bradycardia risk (heart rate too low)"
         )
         all_results.append(result)
 
-        # Use Case 4.3: Triple Therapy without Beta-Blocker
+        # Use Case 4.2: Triple Therapy without Beta-Blocker
         result = self.demonstrate_use_case(
-            "4.3 - ACEI + CCB + Indapamide (No Beta-Blocker)",
+            "4.2 - ACEI + CCB + Indapamide (No Beta-Blocker)",
             ['Ramipril', 'Amlodipine', 'Indapamide'],
             "Tests Foundation + Rule D only, k=1"
         )
@@ -827,28 +847,31 @@ class PathwaySimulator:
         # ====================================================================
         self.print_section_header("MATHEMATICAL FRAMEWORK SUMMARY")
 
-        print("1. COMBINATION FORMULA:")
-        print("   C(n, 2) = n! / (2!(n-2)!)")
-        print("   For n ∈ [2, 4]: maximum C(4,2) = 6 interaction pairs\n")
+        print("Four Mathematical Components:\n")
 
-        print("2. SAFETY FLOOR:")
-        print("   s = minimum(S) where S ∈ {0, 1, 2, 3}")
-        print("   0=Major DDI, 1=Moderate DDI, 2=Minor DDI, 3=No Interaction")
-        print("   Clinical Flag: Safe if s ≥ 2, Flagged if s < 2\n")
+        print("1. INTERACTION COMPLEXITY:")
+        print("   Using the Combination Formula: C(n, 2) = n! / (2!(n-2)!)")
+        print("   2 drugs → 1 interaction pair, 3 drugs → 3 pairs, 4 drugs → 6 pairs\n")
 
-        print("3. FOUNDATION CONSTRAINT (Indicator Function):")
-        print("   G = 𝟙_ℱ(P) = { 1 if ℱ ⊆ SatisfiedRules(P)")
-        print("                 { 0 otherwise")
-        print("   where ℱ = {A, B, C} (Foundation Set for CPG compliance)\n")
+        print("2. SAFETY FLOOR (s):")
+        print("   The minimum severity score across all pairs (weakest link principle)")
+        print("   Severity ranges: 0=Major DDI, 1=Moderate DDI, 2=Minor DDI, 3=No Interaction\n")
 
-        print("4. SPECIALIST PRESCRIPTION (Piecewise Function):")
-        print("   k = { |SatisfiedRules(P) ∩ ℰ| if (D ∈ P) ∨ (E ∈ P)")
-        print("       { 0                      otherwise")
-        print("   where ℰ = {D, E} (Escalation Set)\n")
+        print("3. FOUNDATION CONSTRAINT (G):")
+        print("   Indicator Function: G = 1 if CPG Rules A, B, and C are ALL satisfied, 0 otherwise")
+        print("   This ensures patients receive a RAS blocker plus a Calcium Channel Blocker\n")
 
-        print("5. UNIFIED RANKING VECTOR:")
+        print("4. SPECIALIST SCORE (k):")
+        print("   Counts how many escalation rules (Diuretics or Beta-blockers) are satisfied")
+        print("   For resistant hypertension: Escalation Set ℰ = {D, E}\n")
+
+        print("=" * 80)
+        print("FINAL RESULT: Unified Ranking Vector Q(s, G, k)")
+        print("=" * 80)
         print("   Q(s, G, k) = [s, G, k]ᵀ")
-        print("   Lexicographic ordering: s > G > k (safety first, then CPG, then specialization)\n")
+        print("   Lexicographic Ordering: Safety (s) dominates, then CPG compliance (G), then")
+        print("   specialist prescription (k). Safety dominates because a guideline-compliant")
+        print("   prescription is medically invalid if it causes a life-threatening drug interaction.\n")
 
         # ====================================================================
         # CLINICAL RECOMMENDATIONS
