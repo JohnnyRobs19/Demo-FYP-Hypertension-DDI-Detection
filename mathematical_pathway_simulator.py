@@ -395,22 +395,27 @@ class PathwaySimulator:
 
         # Print grouped recommendations
         self.print_section_header("CLINICAL RECOMMENDATIONS (CPG-Compliant Pathways Only)")
+        print("💡 Recommendations will be shown one group at a time.\n")
 
         # Foundation only
         if pathway_groups['foundation']:
             self._print_pathway_group("FOUNDATION: RAAS Blocker + CCB", pathway_groups['foundation'])
+            input("\n⏎ Press ENTER to see next group...")
 
         # Foundation + Diuretic
         if pathway_groups['foundation_diuretic']:
             self._print_pathway_group("FOUNDATION + DIURETIC", pathway_groups['foundation_diuretic'])
+            input("\n⏎ Press ENTER to see next group...")
 
         # Foundation + Beta-Blocker
         if pathway_groups['foundation_bb']:
             self._print_pathway_group("FOUNDATION + BETA-BLOCKER", pathway_groups['foundation_bb'])
+            input("\n⏎ Press ENTER to see next group...")
 
         # Foundation + Both
         if pathway_groups['foundation_both']:
             self._print_pathway_group("FOUNDATION + DIURETIC + BETA-BLOCKER", pathway_groups['foundation_both'])
+            print("\n✅ All recommendations shown.")
 
     def _print_pathway_group(self, title: str, pathways: List[Dict]):
         """Print a group of pathways separated by ACEI/ARB and severity"""
@@ -522,7 +527,7 @@ class PathwaySimulator:
         print(f"   Q(s, G, k) = [{result['safety_floor_s']}, {result['foundation_g']}, {result['specialist_k']}]ᵀ")
         print(f"\n{'─' * 80}\n")
 
-    def demonstrate_use_case(self, case_name: str, drugs: List[str], description: str):
+    def demonstrate_use_case(self, case_name: str, drugs: List[str], description: str, wait_for_user: bool = True):
         """Demonstrate a single use case"""
         print(f"\n{'▼' * 40}")
         print(f"USE CASE: {case_name}")
@@ -531,6 +536,9 @@ class PathwaySimulator:
 
         result = self.ranker.evaluate_pathway(drugs)
         self.print_pathway_result(result)
+
+        if wait_for_user:
+            input("\n⏎ Press ENTER to continue to next use case...")
 
         return result
 
