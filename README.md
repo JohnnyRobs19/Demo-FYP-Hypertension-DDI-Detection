@@ -4,7 +4,7 @@ Final Year Project - University of Malaya
 
 Student: Jonathan Siew Zunxian
 Supervisor: Dr. Unaizah Hanum Obeidellah
-Collaborator: Dr. Nurulhuda Abdul Manaf (UPNM)
+Collaborator: Dr. Nurulhuda Abdul Manaf and Dr. Nur Aishah Che Roos (UPNM)
 
 ---
 
